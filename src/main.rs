@@ -26,13 +26,21 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "Daylight Population",
         native_options,
-        Box::new(|cc| Ok(Box::new(DaytimePopulationApp::new(cc)))),
+        Box::new(|cc| {
+            let style = egui::Style {
+                visuals: egui::Visuals::dark(),
+                ..egui::Style::default()
+            };
+            cc.egui_ctx.set_style(style);
+            Ok(Box::new(DaytimePopulationApp::new(cc)))
+        }),
     )
 }
 
 // When compiling to web using trunk:
 #[cfg(target_arch = "wasm32")]
 fn main() {
+    use eframe::egui;
     use eframe::wasm_bindgen::JsCast as _;
 
     // Redirect `log` message to `console.log` and friends:
@@ -61,7 +69,14 @@ fn main() {
             .start(
                 canvas,
                 web_options,
-                Box::new(|cc| Ok(Box::new(DaytimePopulationApp::new(cc)))),
+                Box::new(|cc| {
+                    let style = egui::Style {
+                        visuals: egui::Visuals::dark(),
+                        ..egui::Style::default()
+                    };
+                    cc.egui_ctx.set_style(style);
+                    Ok(Box::new(DaytimePopulationApp::new(cc)))
+                }),
             )
             .await;
 
