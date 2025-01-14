@@ -58,6 +58,29 @@ impl DaytimePopulationApp {
 
 impl eframe::App for DaytimePopulationApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            egui::menu::bar(ui, |ui| {
+                ui.label("Daylight Population Counter");
+                ui.separator();
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 4.0;
+                        ui.add(egui::Hyperlink::from_label_and_url(
+                            RichText::new("Micfong").color(MfColors::BLUE_300),
+                            "https://micfong.space/",
+                        ));
+                        ui.label("By");
+                    });
+                    ui.separator();
+
+                    ui.add(egui::Hyperlink::from_label_and_url(
+                        RichText::new("Source code").color(MfColors::BLUE_300),
+                        "https://github.com/micfong-z/daylight_population",
+                    ));
+                    ui.separator();
+                });
+            });
+        });
         egui::CentralPanel::default().show(ctx, |_ui| {
             ctx.style_mut(|style| {
                 style.interaction.tooltip_delay = 0.0;
