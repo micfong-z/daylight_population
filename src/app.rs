@@ -1,5 +1,5 @@
 use chrono::Utc;
-use eframe::egui::{self, Label, RichText, Sense};
+use eframe::egui::{self, DragValue, Label, RichText, Sense};
 use egui_dock::{DockArea, DockState, NodeIndex};
 
 use crate::{
@@ -191,7 +191,7 @@ impl AppContext {
                         let pop = POPULATION_COUNT.get().unwrap()[pop_x + pop_y * 1440];
                         response.show_tooltip_ui(|ui| {
                             ui.add(
-                                Label::new(format!("Lat: {:.6}°", lat))
+                                Label::new(format!("Lat: {:.6}°", -lat))
                                     .wrap_mode(egui::TextWrapMode::Extend),
                             );
                             ui.add(
@@ -202,7 +202,7 @@ impl AppContext {
                                 Label::new(
                                     RichText::new(format!(
                                         "Terminator lat: {:.6}°",
-                                        terminator_lat.to_degrees()
+                                        -terminator_lat.to_degrees()
                                     ))
                                     .color(MfColors::YELLOW_500),
                                 )
@@ -215,8 +215,8 @@ impl AppContext {
 
                             ui.add(Label::new(format!(
                                 "Zone lat: {:.2}° — {:.2}°",
-                                zone_lat,
-                                zone_lat + 0.25
+                                -zone_lat,
+                                -(zone_lat + 0.25)
                             )));
                             ui.add(Label::new(format!(
                                 "Zone lon: {:.2}° — {:.2}°",
@@ -228,7 +228,9 @@ impl AppContext {
                                     .wrap_mode(egui::TextWrapMode::Extend),
                             );
                             ui.separator();
-                            if self.sun_is_north && lat >= terminator_lat.to_degrees() as f32 {
+                            if (self.sun_is_north && lat >= terminator_lat.to_degrees() as f32)
+                                || (!self.sun_is_north && lat <= terminator_lat.to_degrees() as f32)
+                            {
                                 ui.add(Label::new("Day").wrap_mode(egui::TextWrapMode::Extend));
                             } else {
                                 ui.add(Label::new("Night").wrap_mode(egui::TextWrapMode::Extend));
@@ -245,6 +247,7 @@ impl AppContext {
             .show(ui, |ui| {
                 ui.label("Timestamp");
                 ui.label(format!("{:?}ms", self.timestamp));
+                ui.add(DragValue::new(&mut self.timestamp).speed(1.0));
                 ui.end_row();
 
                 ui.label("Julian Date");
@@ -283,7 +286,7 @@ impl AppContext {
                 ui.end_row();
 
                 ui.label("Sun Position (Geographic)");
-                ui.label(format!("Lat {:.8}°", self.gp_deg.lat));
+                ui.label(format!("Lat {:.8}°", -self.gp_deg.lat));
                 ui.label(format!("Lon {:.8}°", self.gp_deg.lon));
                 ui.end_row();
             });
@@ -295,7 +298,7 @@ impl AppContext {
     }
 
     fn calculate(&mut self) {
-        self.timestamp = Utc::now().timestamp_millis();
+        // self.timestamp = Utc::now().timestamp_millis();
         self.jd = julian_date_from_unix_timestamp(self.timestamp);
         self.sun_position = get_sun_position(self.jd);
         self.gp = EarthCoordsRad::from_ra_dec(self.sun_position.ra, self.sun_position.dec, self.jd);
