@@ -1,5 +1,5 @@
 use chrono::Utc;
-use eframe::egui::{self, DragValue, Label, RichText, Sense};
+use eframe::egui::{self, Label, RichText, Sense};
 use egui_dock::{DockArea, DockState, NodeIndex};
 
 use crate::{
@@ -138,7 +138,7 @@ impl AppContext {
                 let mut prev_point = egui::Pos2::ZERO;
                 for (i, &lat) in self.terminator_outline.iter().enumerate() {
                     let x = (i as f32) / 2.0;
-                    let y = (lat as f32) * 2.0 + 180.0;
+                    let y = (-lat as f32) * 2.0 + 180.0;
                     let cur_point = rect_transform.transform_pos(egui::pos2(x, y));
                     if i != 0 {
                         ui.painter().line_segment(
@@ -151,7 +151,7 @@ impl AppContext {
 
                 let sun_coords = rect_transform.transform_pos(egui::Pos2::new(
                     (self.gp_deg.lon * 2.0 + 360.0) as f32,
-                    (self.gp_deg.lat * 2.0 + 180.0) as f32,
+                    (-self.gp_deg.lat * 2.0 + 180.0) as f32,
                 ));
                 ui.painter().add(egui::Shape::convex_polygon(
                     vec![
@@ -181,7 +181,7 @@ impl AppContext {
                 if response.hovered() {
                     if let Some(mouse_pos) = response.hover_pos() {
                         let mouse_pos = rect_transform.inverse().transform_pos(mouse_pos);
-                        let lat = (mouse_pos.y - 180.0) / 2.0;
+                        let lat = (180.0 - mouse_pos.y) / 2.0;
                         let lon = (mouse_pos.x - 360.0) / 2.0;
                         let terminator_lat =
                             get_terminator_point(lon.to_radians().into(), &self.gp);
@@ -191,7 +191,7 @@ impl AppContext {
                         let pop = POPULATION_COUNT.get().unwrap()[pop_x + pop_y * 1440];
                         response.show_tooltip_ui(|ui| {
                             ui.add(
-                                Label::new(format!("Lat: {:.6}°", -lat))
+                                Label::new(format!("Lat: {:.6}°", lat))
                                     .wrap_mode(egui::TextWrapMode::Extend),
                             );
                             ui.add(
@@ -202,7 +202,7 @@ impl AppContext {
                                 Label::new(
                                     RichText::new(format!(
                                         "Terminator lat: {:.6}°",
-                                        -terminator_lat.to_degrees()
+                                        terminator_lat.to_degrees()
                                     ))
                                     .color(MfColors::YELLOW_500),
                                 )
@@ -215,8 +215,8 @@ impl AppContext {
 
                             ui.add(Label::new(format!(
                                 "Zone lat: {:.2}° — {:.2}°",
-                                -zone_lat,
-                                -(zone_lat + 0.25)
+                                zone_lat,
+                                zone_lat + 0.25
                             )));
                             ui.add(Label::new(format!(
                                 "Zone lon: {:.2}° — {:.2}°",
@@ -247,7 +247,6 @@ impl AppContext {
             .show(ui, |ui| {
                 ui.label("Timestamp");
                 ui.label(format!("{:?}ms", self.timestamp));
-                ui.add(DragValue::new(&mut self.timestamp).speed(1.0));
                 ui.end_row();
 
                 ui.label("Julian Date");
@@ -286,7 +285,7 @@ impl AppContext {
                 ui.end_row();
 
                 ui.label("Sun Position (Geographic)");
-                ui.label(format!("Lat {:.8}°", -self.gp_deg.lat));
+                ui.label(format!("Lat {:.8}°", self.gp_deg.lat));
                 ui.label(format!("Lon {:.8}°", self.gp_deg.lon));
                 ui.end_row();
             });
@@ -298,7 +297,7 @@ impl AppContext {
     }
 
     fn calculate(&mut self) {
-        // self.timestamp = Utc::now().timestamp_millis();
+        self.timestamp = Utc::now().timestamp_millis();
         self.jd = julian_date_from_unix_timestamp(self.timestamp);
         self.sun_position = get_sun_position(self.jd);
         self.gp = EarthCoordsRad::from_ra_dec(self.sun_position.ra, self.sun_position.dec, self.jd);

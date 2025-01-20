@@ -160,7 +160,7 @@ fn get_earth_rotation_angle(jd_ut1: JulianDate) -> AngleRad {
 
 pub fn get_terminator_point(lon: LongitudeRad, gp: &EarthCoordsRad) -> LatitudeRad {
     let ha = lon - gp.lon;
-    (ha.cos() / gp.lat.tan()).atan()
+    (-ha.cos() / gp.lat.tan()).atan()
 }
 
 pub fn get_terminator_outline(gp: &EarthCoordsRad) -> Vec<LatitudeRad> {
