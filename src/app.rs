@@ -1,5 +1,5 @@
 use chrono::Utc;
-use eframe::egui::{self, Label, RichText, Sense};
+use eframe::egui::{self, DragValue, Label, RichText, Sense};
 use egui_dock::{DockArea, DockState, NodeIndex};
 
 use crate::{
@@ -28,6 +28,7 @@ struct AppContext {
     gmst: AngleHour,
     terminator_outline: Vec<f64>,
     sun_is_north: bool,
+    custom_time: bool,
 }
 
 impl Default for DaytimePopulationApp {
@@ -246,7 +247,12 @@ impl AppContext {
             .striped(true)
             .show(ui, |ui| {
                 ui.label("Timestamp");
-                ui.label(format!("{:?}ms", self.timestamp));
+                if self.custom_time {
+                    ui.add(DragValue::new(&mut self.timestamp).speed(1000.0));
+                } else {
+                    ui.label(format!("{:?}ms", self.timestamp));
+                }
+                ui.checkbox(&mut self.custom_time, "Use custom time");
                 ui.end_row();
 
                 ui.label("Julian Date");
@@ -297,7 +303,9 @@ impl AppContext {
     }
 
     fn calculate(&mut self) {
-        self.timestamp = Utc::now().timestamp_millis();
+        if !self.custom_time {
+            self.timestamp = Utc::now().timestamp_millis();
+        }
         self.jd = julian_date_from_unix_timestamp(self.timestamp);
         self.sun_position = get_sun_position(self.jd);
         self.gp = EarthCoordsRad::from_ra_dec(self.sun_position.ra, self.sun_position.dec, self.jd);
